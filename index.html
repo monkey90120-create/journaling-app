@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Journal">
+  <meta name="theme-color" content="#1a237e">
+  <title>Journal</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===== Active Activity Banner ===== -->
+  <div id="active-banner" role="status" aria-live="polite">
+    <div class="banner-inner">
+      <div class="banner-info">
+        <span class="banner-dot" aria-hidden="true"></span>
+        <span class="banner-title" id="banner-title">作業中</span>
+        <span class="banner-elapsed" id="banner-elapsed">00:00</span>
+      </div>
+      <button class="banner-end-btn" id="banner-end-btn" aria-label="行動を終了">終了</button>
+    </div>
+  </div>
+
+  <!-- ===== Views ===== -->
+  <div id="views">
+
+    <!-- Home View -->
+    <div id="view-home" class="view active" role="main">
+      <div class="view-header">
+        <div class="view-header-inner">
+          <div>
+            <div class="view-title">今日</div>
+            <div class="view-date" id="today-date"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fab-area">
+        <button class="fab-activity" id="btn-start-activity" aria-label="行動を記録">
+          <span aria-hidden="true">▶</span> 行動を記録
+        </button>
+        <button class="fab-emotion" id="btn-add-emotion" aria-label="感情をメモ">
+          <span aria-hidden="true">♥</span> 感情をメモ
+        </button>
+      </div>
+
+      <div class="timeline" id="today-timeline" aria-label="今日のタイムライン">
+        <div class="timeline-empty" id="today-empty">
+          <span class="timeline-empty-icon" aria-hidden="true">📓</span>
+          <p class="timeline-empty-text">まだ記録がありません<br>行動や感情を記録してみましょう</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- History View -->
+    <div id="view-history" class="view" role="main">
+      <div class="view-header">
+        <div class="view-header-inner">
+          <div class="view-title">履歴</div>
+        </div>
+      </div>
+      <div class="history-list" id="history-list" aria-label="過去の記録一覧">
+        <div class="timeline-empty">
+          <span class="timeline-empty-icon" aria-hidden="true">📅</span>
+          <p class="timeline-empty-text">履歴がありません</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Day Detail View -->
+    <div id="view-day-detail" class="view" role="main">
+      <div class="view-header">
+        <div class="view-header-inner">
+          <button class="detail-header-back" id="back-from-detail" aria-label="履歴に戻る">
+            ‹ 履歴
+          </button>
+          <div style="flex:1; text-align:center;">
+            <div class="view-title" id="detail-view-title"></div>
+          </div>
+          <div class="detail-actions">
+            <button class="detail-action-btn" id="btn-share-day" aria-label="Appleメモに書き出し">
+              書き出し
+            </button>
+            <button class="detail-action-btn destructive" id="btn-delete-day" aria-label="この日の記録を削除">
+              削除
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="timeline" id="detail-timeline" aria-label="日別タイムライン"></div>
+    </div>
+
+  </div><!-- /#views -->
+
+  <!-- ===== Bottom Navigation ===== -->
+  <nav id="bottom-nav" aria-label="メインナビゲーション">
+    <div class="nav-inner">
+      <button class="nav-item active" id="nav-home" data-view="home" aria-current="page">
+        <span class="nav-icon" aria-hidden="true">📖</span>
+        <span class="nav-label">今日</span>
+      </button>
+      <button class="nav-item" id="nav-history" data-view="history">
+        <span class="nav-icon" aria-hidden="true">📅</span>
+        <span class="nav-label">履歴</span>
+      </button>
+    </div>
+  </nav>
+
+</div><!-- /#app -->
+
+<!-- ===== Modal: Start Activity ===== -->
+<div class="modal-overlay" id="modal-activity-start" role="dialog" aria-modal="true" aria-labelledby="modal-activity-start-title">
+  <div class="modal-sheet">
+    <div class="modal-handle" aria-hidden="true"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-activity-start-title">行動を記録</span>
+      <button class="modal-close-btn" data-close="modal-activity-start" aria-label="閉じる">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="activity-name-input">行動名</label>
+        <input
+          type="text"
+          class="form-input"
+          id="activity-name-input"
+          placeholder="例: 読書、運動、会議..."
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+        >
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="activity-start-time-input">開始時刻</label>
+        <input
+          type="datetime-local"
+          class="form-datetime"
+          id="activity-start-time-input"
+        >
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="btn-confirm-start" style="flex:1">開始</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: End Activity ===== -->
+<div class="modal-overlay" id="modal-activity-end" role="dialog" aria-modal="true" aria-labelledby="modal-activity-end-title">
+  <div class="modal-sheet">
+    <div class="modal-handle" aria-hidden="true"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-activity-end-title">行動を終了</span>
+      <button class="modal-close-btn" data-close="modal-activity-end" aria-label="閉じる">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="end-activity-name" style="font-size:16px;font-weight:600;margin-bottom:16px;color:var(--activity-accent)"></p>
+      <div class="form-group">
+        <label class="form-label" for="activity-end-time-input">終了時刻</label>
+        <input
+          type="datetime-local"
+          class="form-datetime"
+          id="activity-end-time-input"
+        >
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="btn-confirm-end" style="flex:1">終了を記録</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Emotion ===== -->
+<div class="modal-overlay" id="modal-emotion" role="dialog" aria-modal="true" aria-labelledby="modal-emotion-title">
+  <div class="modal-sheet">
+    <div class="modal-handle" aria-hidden="true"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-emotion-title">感情をメモ</span>
+      <button class="modal-close-btn" data-close="modal-emotion" aria-label="閉じる">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="emotion-text-input">気持ち・思ったこと</label>
+        <textarea
+          class="form-textarea"
+          id="emotion-text-input"
+          placeholder="今どんな気持ちですか？自由に書いてみましょう..."
+        ></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="emotion-time-input">時刻</label>
+        <input
+          type="datetime-local"
+          class="form-datetime"
+          id="emotion-time-input"
+        >
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="btn-save-emotion" style="flex:1">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Entry Detail ===== -->
+<div class="modal-overlay" id="modal-entry-detail" role="dialog" aria-modal="true" aria-labelledby="modal-entry-detail-title">
+  <div class="modal-sheet">
+    <div class="modal-handle" aria-hidden="true"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-entry-detail-title">詳細</span>
+      <button class="modal-close-btn" data-close="modal-entry-detail" aria-label="閉じる">×</button>
+    </div>
+    <div class="modal-body" id="modal-entry-detail-body">
+      <!-- Dynamically filled -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== Confirm Dialog ===== -->
+<div class="confirm-overlay" id="confirm-overlay" role="alertdialog" aria-modal="true">
+  <div class="confirm-sheet">
+    <div class="confirm-body">
+      <div class="confirm-title" id="confirm-title">確認</div>
+      <div class="confirm-message" id="confirm-message"></div>
+    </div>
+    <div class="confirm-actions">
+      <button class="confirm-btn" id="confirm-cancel">キャンセル</button>
+      <button class="confirm-btn destructive" id="confirm-ok">削除</button>
+    </div>
+  </div>
+</div>
+
+<script src="./app.js"></script>
+</body>
+</html>
