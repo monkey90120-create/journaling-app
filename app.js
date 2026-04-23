@@ -210,10 +210,11 @@ async function renderToday() {
   todayDateEl.textContent = todayLabel();
   const dayKey = localDayKey();
   const entries = await dbGetByDay(dayKey);
+  // 今日のタイムラインは新しい順（上が最新）
   entries.sort((a, b) => {
     const ta = a.type === 'activity' ? a.startTime : a.timestamp;
     const tb = b.type === 'activity' ? b.startTime : b.timestamp;
-    return new Date(ta) - new Date(tb);
+    return new Date(tb) - new Date(ta);
   });
 
   // Clear existing cards (keep empty placeholder structure)
@@ -708,6 +709,22 @@ function renderDetailModal(entry) {
 }
 
 // ===== Day Detail Actions =====
+
+$('btn-share-today').addEventListener('click', async () => {
+  const dayKey = localDayKey();
+  const entries = await dbGetByDay(dayKey);
+  if (entries.length === 0) { showToast('記録がありません'); return; }
+  const text = await buildExportText(dayKey);
+  if (navigator.share) {
+    try {
+      await navigator.share({ text });
+    } catch (e) {
+      if (e.name !== 'AbortError') fallbackCopyToClipboard(text);
+    }
+  } else {
+    fallbackCopyToClipboard(text);
+  }
+});
 
 $('btn-share-day').addEventListener('click', async () => {
   const dayKey = state.detailDayKey;
