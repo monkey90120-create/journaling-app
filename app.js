@@ -710,11 +710,31 @@ function renderDetailModal(entry) {
 
 // ===== Day Detail Actions =====
 
-$('btn-share-today').addEventListener('click', async () => {
-  const dayKey = localDayKey();
-  const entries = await dbGetByDay(dayKey);
-  if (entries.length === 0) { showToast('記録がありません'); return; }
-  const text = await buildExportText(dayKey);
+$('btn-share-today').addEventListener('click', openModal.bind(null, 'modal-export-picker'));
+
+$('btn-export-past').addEventListener('click', async () => {
+  closeModal('modal-export-picker');
+  await runExport({ includeToday: false });
+});
+
+$('btn-export-all').addEventListener('click', async () => {
+  closeModal('modal-export-picker');
+  await runExport({ includeToday: true });
+});
+
+async function runExport({ includeToday }) {
+  const todayKey = localDayKey();
+  const all = await dbGetAll();
+  const entries = includeToday
+    ? all
+    : all.filter((e) => entryDayKey(e) !== todayKey);
+
+  if (entries.length === 0) {
+    showToast('記録がありません');
+    return;
+  }
+
+  const text = buildExportTextFromEntries(entries);
   if (navigator.share) {
     try {
       await navigator.share({ text });
@@ -724,46 +744,43 @@ $('btn-share-today').addEventListener('click', async () => {
   } else {
     fallbackCopyToClipboard(text);
   }
-});
+}
 
-$('btn-share-day').addEventListener('click', async () => {
-  const dayKey = state.detailDayKey;
-  if (!dayKey) return;
-  const text = await buildExportText(dayKey);
-  if (navigator.share) {
-    try {
-      await navigator.share({ text });
-    } catch (e) {
-      if (e.name !== 'AbortError') {
-        fallbackCopyToClipboard(text);
-      }
-    }
-  } else {
-    fallbackCopyToClipboard(text);
+function entryDayKey(e) {
+  if (e.dayKey) return e.dayKey;
+  const iso = e.type === 'activity' ? e.startTime : e.timestamp;
+  return localDayKey(new Date(iso));
+}
+
+function buildExportTextFromEntries(entries) {
+  const groups = new Map();
+  for (const e of entries) {
+    const key = entryDayKey(e);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(e);
   }
-});
 
-async function buildExportText(dayKey) {
-  const entries = await dbGetByDay(dayKey);
-  entries.sort((a, b) => {
-    const ta = a.type === 'activity' ? a.startTime : a.timestamp;
-    const tb = b.type === 'activity' ? b.startTime : b.timestamp;
-    return new Date(ta) - new Date(tb);
+  const sortedKeys = [...groups.keys()].sort();
+  const blocks = sortedKeys.map((dayKey) => {
+    const dayEntries = groups.get(dayKey).slice().sort((a, b) => {
+      const ta = a.type === 'activity' ? a.startTime : a.timestamp;
+      const tb = b.type === 'activity' ? b.startTime : b.timestamp;
+      return new Date(ta) - new Date(tb);
+    });
+    const lines = dayEntries.map((e) => {
+      if (e.type === 'activity') {
+        const start = formatTime(e.startTime);
+        const end = e.endTime ? formatTime(e.endTime) : '進行中';
+        const dur = e.endTime ? ` (${formatDuration(e.startTime, e.endTime)})` : '';
+        return `• [行動] ${start}〜${end}${dur} ${e.title || ''}`;
+      } else {
+        return `• [感情] ${formatTime(e.timestamp)} ${e.text || ''}`;
+      }
+    });
+    return `━━━━━━━━━━━━━━━━━━━━\n📅 ${formatDayLabel(dayKey)}\n\n${lines.join('\n')}`;
   });
 
-  const header = formatDayLabel(dayKey);
-  const lines = entries.map((e) => {
-    if (e.type === 'activity') {
-      const start = formatTime(e.startTime);
-      const end = e.endTime ? formatTime(e.endTime) : '進行中';
-      const dur = e.endTime ? ` (${formatDuration(e.startTime, e.endTime)})` : '';
-      return `• [行動] ${start}〜${end}${dur} ${e.title || ''}`;
-    } else {
-      return `• [感情] ${formatTime(e.timestamp)} ${e.text || ''}`;
-    }
-  });
-
-  return `${header}\n\n${lines.join('\n')}`;
+  return blocks.join('\n\n');
 }
 
 async function fallbackCopyToClipboard(text) {

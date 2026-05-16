@@ -90,9 +90,6 @@
             <div class="view-title" id="detail-view-title"></div>
           </div>
           <div class="detail-actions">
-            <button class="detail-action-btn" id="btn-share-day" aria-label="Appleメモに書き出し">
-              書き出し
-            </button>
             <button class="detail-action-btn destructive" id="btn-delete-day" aria-label="この日の記録を削除">
               削除
             </button>
@@ -223,6 +220,23 @@
     </div>
     <div class="modal-body" id="modal-entry-detail-body">
       <!-- Dynamically filled -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Export Picker ===== -->
+<div class="modal-overlay" id="modal-export-picker" role="dialog" aria-modal="true" aria-labelledby="modal-export-picker-title">
+  <div class="modal-sheet">
+    <div class="modal-handle" aria-hidden="true"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-export-picker-title">書き出し範囲を選択</span>
+      <button class="modal-close-btn" data-close="modal-export-picker" aria-label="閉じる">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-actions" style="flex-direction:column;gap:12px;">
+        <button class="btn btn-primary" id="btn-export-past" style="width:100%">過去すべて（今日を除く）</button>
+        <button class="btn btn-primary" id="btn-export-all" style="width:100%">すべて（今日も含む）</button>
+      </div>
     </div>
   </div>
 </div>
